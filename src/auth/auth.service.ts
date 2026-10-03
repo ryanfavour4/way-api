@@ -154,13 +154,7 @@ export class AuthService {
     });
   }
 
-  async registerLocal(
-    fullname: string,
-    email: string,
-    password: string,
-    phone_number: string,
-    date_of_birth: string,
-  ) {
+  async registerLocal(fullname: string, email: string, password: string) {
     const existingUser = await this.userRepo.findOne({ where: { email } });
     if (existingUser) throw new BadRequestException('Email already in use');
 
@@ -175,8 +169,6 @@ export class AuthService {
       fullname,
       username,
       email,
-      phone_number,
-      date_of_birth,
       password: hashedPassword,
       verification_token: verificationToken,
       provider: AuthProvider.LOCAL,

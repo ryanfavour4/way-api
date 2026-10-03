@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsEmail,
-  IsPhoneNumber,
-  IsDateString,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsEmail, IsOptional } from 'class-validator';
 
 export class GoogleProfileDto {
   id!: string;
@@ -20,12 +14,6 @@ export class RegisterDto {
 
   @IsString()
   password!: string;
-
-  @IsPhoneNumber()
-  telephone!: string;
-
-  @IsDateString() // YYYY-MM-DD
-  birthday!: string;
 
   @IsString()
   @IsEmail()

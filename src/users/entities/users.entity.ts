@@ -68,7 +68,7 @@ export class User {
     enum: UserGender,
     default: UserGender.MALE,
   })
-  gender: UserGender = UserGender.MALE;
+  gender?: UserGender = UserGender.MALE;
 
   // Link assets and banners to your Upload entity
   @ManyToOne(() => Upload, {

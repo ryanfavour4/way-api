@@ -43,15 +43,9 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() body: RegisterDto) {
-    const { fullname, email, password, telephone, birthday } = body;
+    const { fullname, email, password } = body;
 
-    return this.authService.registerLocal(
-      fullname,
-      email,
-      password,
-      telephone,
-      birthday,
-    );
+    return this.authService.registerLocal(fullname, email, password);
   }
 
   @Get('verify-email')
