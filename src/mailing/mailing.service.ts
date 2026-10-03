@@ -3,30 +3,18 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import Mailgun = require('mailgun.js');
-import formData from 'form-data';
-import { MAILGUN_API_KEY, MAILGUN_DOMAIN, MAILGUN_ENDPOINT } from 'src/env';
-import { IMailgunClient } from 'node_modules/mailgun.js/Types/Interfaces';
+import { BREVO_API_KEY, BREVO_SENDER_EMAIL, BREVO_SENDER_NAME } from 'src/env';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 
 @Injectable()
 export class MailingService {
-  private mg: IMailgunClient;
+  // Infer client type dynamically to avoid node_modules path errors
   private readonly logger = new Logger(MailingService.name);
+  private readonly brevoApiUrl = 'https://api.brevo.com/v3/smtp/email';
 
-  constructor() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const mailgun = new (Mailgun as any)(formData);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    this.mg = mailgun.client({
-      username: 'api',
-      key: MAILGUN_API_KEY,
-      url: `https://${MAILGUN_ENDPOINT}`, // api.mailgun.net
-    });
-  }
+  constructor() {}
 
   /**
    * MAPPER & COMPILER: Loads HTML from folder and injects variables
@@ -75,20 +63,52 @@ export class MailingService {
     vars: any,
   ) {
     try {
-      // Get compiled HTML
+      // 1. Compile your existing Handlebars templates into static HTML
       const htmlBody = this.getHtmlContent(templateName, vars);
 
-      const response = await this.mg.messages.create(MAILGUN_DOMAIN, {
-        from: `G.E.M Fundraise <noreply@${MAILGUN_DOMAIN}>`,
-        to: [to],
+      // 2. Format the payload per Brevo API specifications
+      const payload = {
+        sender: {
+          name: BREVO_SENDER_NAME || 'ICM Team',
+          email: BREVO_SENDER_EMAIL,
+        },
+        to: [{ email: to }], // You can add a name here if you pass it down later
         subject: subject,
-        html: htmlBody, // Changed from 'template' to 'html'
+        htmlContent: htmlBody,
+      };
+
+      // 3. Send via Brevo HTTP API
+      const response = await fetch(this.brevoApiUrl, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'api-key': BREVO_API_KEY,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
 
-      return response;
+      if (!response.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const errorData = await response.json().catch(() => null);
+        this.logger.error(
+          `Brevo API Error: ${response.status} - ${response.statusText}`,
+          errorData,
+        );
+        throw new Error(`Brevo rejected the request: ${response.statusText}`);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const data = await response.json();
+      this.logger.log(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `Email sent successfully to ${to}. MessageId: ${data.messageId}`,
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return data;
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}:`, error);
-      throw error;
+      throw new InternalServerErrorException('Failed to send email');
     }
   }
 
@@ -98,40 +118,43 @@ export class MailingService {
   async sendDonorSuccessEmail(
     email: string,
     amount: number,
-    campaignTitle: string,
+    projectName: string,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.send(email, 'Donation Successful! ❤️', 'donation-success', {
       amount: amount.toLocaleString(),
-      campaign_title: campaignTitle,
+      project_name: projectName,
     });
   }
 
   /**
-   * TYPE 2: Notification to Campaign Owner
+   * TYPE 2: Notification to Project Owner
    */
   async sendOwnerNotification(
     ownerEmail: string,
     donorName: string,
     amount: number,
-    campaignTitle: string,
+    projectName: string,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.send(ownerEmail, 'New Donation Received! 🚀', 'new-donation', {
       donor_name: donorName || 'An anonymous donor',
       amount: amount.toLocaleString(),
-      campaign_title: campaignTitle,
+      project_name: projectName,
     });
   }
 
   /**
    * TYPE 3: Goal Reached Notification
    */
-  async sendGoalReachedEmail(ownerEmail: string, campaignTitle: string) {
+  async sendGoalReachedEmail(ownerEmail: string, projectName: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.send(
       ownerEmail,
       'Congratulations! Goal Reached! 🎉',
       'goal_reached',
       {
-        campaign_title: campaignTitle,
+        project_name: projectName,
       },
     );
   }
@@ -145,6 +168,7 @@ export class MailingService {
     template: string,
     vars: any,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.send(to, subject, template, vars);
   }
 
@@ -173,7 +197,7 @@ export class MailingService {
     const subject = isPasswordReset
       ? 'Password Reset Code'
       : 'Verify Your Email';
-
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.send(email, subject, 'email-verification', {
       code: code,
       message: action,
@@ -184,7 +208,8 @@ export class MailingService {
    * TYPE 6: Welcome & Verification Email
    */
   async sendWelcomeEmail(email: string, fullname: string, verifyUrl: string) {
-    return this.send(email, 'Welcome to G.E.M Fundraise! 🌟', 'welcome', {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.send(email, 'Welcome to WAY! 🧭 ↗️', 'welcome', {
       fullname,
       verifyUrl,
     });
