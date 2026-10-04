@@ -14,9 +14,8 @@ import {
   ResetPasswordDto,
   UpdateProfileDto,
 } from './dto/create-auth.dto';
-import { CLIENT_BASEURL, GOOGLE_CLIENT_ID, RESEND_API_KEY } from 'src/env';
+import { GOOGLE_CLIENT_ID, RESEND_API_KEY } from 'src/env';
 import * as bcrypt from 'bcryptjs'; // Changed from 'bcrypt'
-import { v4 as uuidv4 } from 'uuid'; // pnpm add uuid
 import { Resend } from 'resend'; // pnpm add resend
 import { MailingService } from 'src/mailing/mailing.service';
 import { OAuth2Client } from 'google-auth-library';
@@ -159,7 +158,10 @@ export class AuthService {
     if (existingUser) throw new BadRequestException('Email already in use');
 
     const hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
-    const verificationToken = uuidv4();
+    // Generate a 6-digit code instead of a long UUID
+    const verification_token = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
 
     // Create a username
     const baseUsername = fullname.toLowerCase().replace(/\s/g, '');
@@ -170,19 +172,21 @@ export class AuthService {
       username,
       email,
       password: hashedPassword,
-      verification_token: verificationToken,
+      verification_token,
       provider: AuthProvider.LOCAL,
       email_verified: false,
     });
 
     await this.userRepo.save(user);
 
-    // --- UPDATED MAILING LOGIC ---
-    const verifyUrl = `${CLIENT_BASEURL}/auth/verify?token=${verificationToken}`;
-
     try {
       // Use your MailingService instead of Resend
-      await this.mailingService.sendWelcomeEmail(email, fullname, verifyUrl);
+      await this.mailingService.sendVerificationCode(
+        email,
+        user.fullname,
+        verification_token,
+        false,
+      );
     } catch (error) {
       // We catch the error so the user still gets registered even if the email fails
       this.logger.error(`Welcome email failed for ${email}:`, error);
@@ -269,7 +273,12 @@ export class AuthService {
     await this.userRepo.save(user);
 
     // Send the email using your existing MailingService
-    await this.mailingService.sendVerificationCode(user.email, code, true);
+    await this.mailingService.sendVerificationCode(
+      user.email,
+      user.fullname,
+      code,
+      true,
+    );
 
     return { message: 'Code sent successfully' };
   }

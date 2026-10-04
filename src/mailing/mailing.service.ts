@@ -188,6 +188,7 @@ export class MailingService {
    */
   async sendVerificationCode(
     email: string,
+    name: string,
     code: string,
     isPasswordReset: boolean = false,
   ) {
@@ -199,7 +200,8 @@ export class MailingService {
       : 'Verify Your Email';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.send(email, subject, 'email-verification', {
-      code: code,
+      code,
+      name,
       message: action,
     });
   }
