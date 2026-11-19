@@ -24,16 +24,13 @@ export class UploadsService {
     const publicId = `${type}-${assetId}`;
 
     // 1. First, just handle the Cloudinary upload in the promise
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: `fundraise/${type}`,
+          folder: `way/${type}`,
           resource_type: 'auto',
           public_id: publicId,
         },
-        // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
         (error: Error | undefined, result: UploadApiResponse | undefined) => {
           if (error || !result)
             return reject(new Error(error?.message || 'Upload failed'));
@@ -48,13 +45,10 @@ export class UploadsService {
     // 2. Now that the promise is done, handle the DB save OUTSIDE the callback
     try {
       const newUpload = this.uploadRepo.create({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         url: result.secure_url,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         public_id: result.public_id,
         asset_id: assetId,
         type: type,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         resource_type: result.resource_type,
       });
 
@@ -88,7 +82,7 @@ export class UploadsService {
     try {
       // 1. Delete from Cloudinary first
       // Note: destroy() needs the publicId, which you've luckily saved in your DB!
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const cloudinaryResponse = await cloudinary.uploader.destroy(
         upload.public_id,
       );

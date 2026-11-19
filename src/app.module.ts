@@ -10,6 +10,7 @@ import { dataSourceOption } from 'db/data-source';
 import { StoresModule } from './stores/stores.module';
 import { StoreOperatingHoursModule } from './store_operating_hours/store_operating_hours.module';
 import { CategoriesModule } from './categories/categories.module';
+import { StoreSubscriptionModule } from './store_subscription/store_subscription.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { CategoriesModule } from './categories/categories.module';
     StoresModule,
     StoreOperatingHoursModule,
     CategoriesModule,
+    StoreSubscriptionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

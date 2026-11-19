@@ -162,6 +162,14 @@ export class Store {
   })
   store_type: StoreType = StoreType.RETAIL;
 
+  // Verified celebrity stores
+  @Column({ default: false })
+  @Index()
+  has_verified_badge: boolean = false; // Fast check for UI checkmark & search ranking boost
+
+  @Column({ type: 'timestamp', nullable: true })
+  verified_badge_expires_at?: Date; // Enables quick cron checks or soft grace periods
+
   // Primary Category (Required)
   @Column({ unsigned: true })
   primary_category_id!: number;

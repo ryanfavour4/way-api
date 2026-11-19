@@ -55,7 +55,7 @@ export class StoresController {
 
   @Patch(':id/verify')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.ADMIN_STAFF)
   async verifyStore(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: any,

@@ -1,0 +1,517 @@
+{
+  "info": {
+    "_postman_id": "f6a7302c-d185-47d6-99a6-d58c10a0d739",
+    "name": "Way Api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "34642578"
+  },
+  "item": [
+    {
+      "name": "Auth 🔐",
+      "item": [
+        {
+          "name": "Register User Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullname\": \"Ryan Favour Chukwuka\",\r\n    \"email\": \"ryanfave022@gmail.com\",\r\n    \"password\": \"ryanfave022@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/register",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User Sign In",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"bg1106@elsu.top\",\r\n    \"password\": \"bg1106@elsu.top\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/login",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"hello.myspecialday@outlook.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/forgot-password",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"hello.myspecialday@outlook.com\",\r\n    \"code\": \"245354\",\r\n    \"newPassword\": \"moutlook123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/reset-password",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTE1ODAsIm5hbWUiOiJNU0QgR3V5IiwiaWF0IjoxNzc1MDYwMzkxLCJleHAiOjE4MDY1OTYzOTF9.iRzvvl4FbUiKW2g07bMEne4bvOw1fAcKP-uHnwb4kxI",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/verify-email?token=c4c9595b-98bd-45e9-8070-5a9f518ef571",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-email"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "c4c9595b-98bd-45e9-8070-5a9f518ef571"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Signin With Google",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/google",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "google"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Me By Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTE1ODAsIm5hbWUiOiJNU0QgR3V5IiwiaWF0IjoxNzc1MDYwMzkxLCJleHAiOjE4MDY1OTYzOTF9.iRzvvl4FbUiKW2g07bMEne4bvOw1fAcKP-uHnwb4kxI",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/me",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Edit Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTEwNjQsIm5hbWUiOiJNU0QgR3V5IiwiaWF0IjoxNzc2NTkyNjc5LCJleHAiOjE3NzY2NzkwNzl9.Wa7GPmBxMdvrzqnLj6UiibDGoZQmF6Lt11hAh9qdNfM",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullname\": \"MSD Guy\",\r\n    \"username\": \"myspecialday\",\r\n    \"bio\": \"hello my name is my special day i run an  outlook.com business\",\r\n    \"telephone\": \"+2349022698445\",\r\n    \"birthday\": \"2002-05-06\",\r\n    \"location\": \"Maduguri, Nigeria\",\r\n    \"country\": \"Nigeria\",\r\n    \"avatar\": \"https://res.cloudinary.com/dowwocxkv/image/upload/v1776592703/fundraise/user-profile/user-profile-f5724021-519d-48d8-9a8e-68ca947d3acd.jpg\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/auth/update-profile",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "update-profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categories 🔠",
+      "item": [
+        {
+          "name": "Get all categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/categories",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create category",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Electronics\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/categories",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stores 🏪",
+      "item": [
+        {
+          "name": "Get all stores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/stores",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stores"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create store",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Matrix Electronics & Gadgets\",\r\n  \"legal_name\": \"Matrix Tech Solutions Ltd\",\r\n  \"rc_number\": \"RC-1849204\",\r\n  \"tax_id\": \"TIN-29481029-0001\",\r\n  \"description\": \"Premier retail store for laptops, smartphones, computing accessories, and audio gear.\",\r\n  \"contact_email\": \"sales@matrixtech.ng\",\r\n  \"primary_phone\": \"+2348031234567\",\r\n  \"secondary_phone\": \"+2348029876543\",\r\n  \"website_url\": \"https://matrixtech.ng\",\r\n  \"logo_id\": 12,\r\n  \"storefront_image_id\": 45,\r\n  \"address_line\": \"12 Otigba Street, Computer Village\",\r\n  \"unit_suite\": \"Suite 4B\",\r\n  \"landmark\": \"Opposite Medical Road Roundabout\",\r\n  \"city\": \"Ikeja\",\r\n  \"state\": \"Lagos\",\r\n  \"country\": \"Nigeria\",\r\n  \"postal_code\": \"100271\",\r\n  \"latitude\": 6.5925,\r\n  \"longitude\": 3.3422,\r\n  \"store_type\": \"RETAIL\",\r\n  \"verification_notes\": \"nothing\",\r\n  \"primary_category_id\": 1,\r\n  \"secondary_category_id\": 2,\r\n  \"tertiary_category_id\": 3\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/stores",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stores"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Uploads 📤",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkNtb25lIEFnZW5jeXNxIiwiaWF0IjoxNzg5NzA2ODg2LCJleHAiOjE3ODk3OTMyODZ9.D0zNHOZPcGGq1Dye3ZXaufK1VW7MGIYkbtyCkcf57-s",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "uuid": "239acc14-21de-49d5-bb8a-d520ecab07a3",
+                  "src": "/C:/Users/ryanf/OneDrive/Pictures/Screenshots/Screenshot 2026-08-15 145937.png"
+                },
+                {
+                  "key": "type",
+                  "value": "event-images",
+                  "type": "text",
+                  "uuid": "8c5c286e-5424-4c42-997c-be47e57f2511"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/uploads",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "uploads"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Uploaded Files",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTE1ODAsIm5hbWUiOiJNU0QgR3V5IiwiaWF0IjoxNzc1MDYwMzkxLCJleHAiOjE4MDY1OTYzOTF9.iRzvvl4FbUiKW2g07bMEne4bvOw1fAcKP-uHnwb4kxI",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/uploads/",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "uploads",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Uploaded Files By Id",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTE1ODAsIm5hbWUiOiJNU0QgR3V5IiwiaWF0IjoxNzc1MDYwMzkxLCJleHAiOjE4MDY1OTYzOTF9.iRzvvl4FbUiKW2g07bMEne4bvOw1fAcKP-uHnwb4kxI",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/uploads/66",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "uploads",
+                "66"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Uploaded Files By Id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTE1ODAsIm5hbWUiOiJNU0QgR3V5IiwiaWF0IjoxNzc1MDYwMzkxLCJleHAiOjE4MDY1OTYzOTF9.iRzvvl4FbUiKW2g07bMEne4bvOw1fAcKP-uHnwb4kxI",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/uploads/12",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "uploads",
+                "12"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Hello World",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:3300/api/v1",
+          "host": [
+            "localhost"
+          ],
+          "port": "3300",
+          "path": [
+            "api",
+            "v1"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "SERVER_BASEURL",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}

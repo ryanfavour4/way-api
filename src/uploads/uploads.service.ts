@@ -24,7 +24,6 @@ export class UploadsService {
     const assetId = uuidv4();
 
     // Extract file extension (.jpg, .mp4, etc) safely
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     const fileExt = path.extname(file.originalname) || '';
     const uniqueFilename = `${type}-${assetId}${fileExt}`;
 
@@ -42,7 +41,6 @@ export class UploadsService {
         public_id: relativeUrl, // We map the path here so delete knows where to look
         asset_id: assetId,
         type: type,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         resource_type: file.mimetype.split('/')[0], // dynamically tags 'image' or 'video'
       });
 

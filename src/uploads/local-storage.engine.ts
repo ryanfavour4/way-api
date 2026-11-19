@@ -41,7 +41,6 @@ export class LocalStorageEngine {
 
       const filePath = path.join(targetDir, filename);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (!file.buffer) {
         throw new InternalServerErrorException(
           'Uploaded file buffer is missing',
@@ -49,7 +48,6 @@ export class LocalStorageEngine {
       }
 
       // Write the binary data to disk
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       await fs.promises.writeFile(filePath, file.buffer);
 
       // Return the uniform web URL matching your main.ts setup
