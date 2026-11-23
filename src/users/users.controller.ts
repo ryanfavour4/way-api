@@ -1,29 +1,24 @@
 import {
   Controller,
   Get,
-  // Post,
   Body,
   Patch,
   Param,
   Delete,
   UseGuards,
+  Req,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-// import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from 'src/auth/guard/auth.guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { Roles } from 'src/auth/decorator/roles.decorator';
-import { UserRole } from './entities/users.entity';
+import { User, UserRole } from './entities/users.entity';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  // @Post()
-  // create(@Body() createUserDto: CreateUserDto) {
-  //   return this.usersService.create(createUserDto);
-  // }
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard) // Order matters! JwtAuthGuard runs first.
@@ -33,17 +28,23 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { user: User },
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(id, req.user, updateUserDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req: { user: User }) {
+    return this.usersService.remove(id, req.user);
   }
 }

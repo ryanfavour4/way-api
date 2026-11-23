@@ -7,7 +7,7 @@ import { JWT_SECRET } from 'src/env';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailingModule } from 'src/mailing/mailing.module';
 import { Upload } from 'src/uploads/entities/upload.entity';
-import { UploadsService } from 'src/uploads/uploads.service';
+import { UploadsModule } from 'src/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -18,8 +18,9 @@ import { UploadsService } from 'src/uploads/uploads.service';
       signOptions: { expiresIn: '7d' },
     }),
     MailingModule,
+    UploadsModule,
   ],
-  providers: [AuthService, UploadsService],
+  providers: [AuthService],
   controllers: [AuthController],
   exports: [JwtModule, AuthService],
 })

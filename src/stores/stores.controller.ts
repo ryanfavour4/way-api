@@ -16,7 +16,7 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { Store } from './entities/store.entity';
 import { JwtAuthGuard } from 'src/auth/guard/auth.guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
-import { UserRole } from 'src/users/entities/users.entity';
+import { User, UserRole } from 'src/users/entities/users.entity';
 import { Roles } from 'src/auth/decorator/roles.decorator';
 import { VerifyStoreDto } from './dto/verify-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
@@ -28,9 +28,11 @@ export class StoresController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MERCHANT, UserRole.ADMIN)
-  async create(@Req() req: any, @Body() dto: CreateStoreDto): Promise<Store> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
-    return this.storesService.create(req.user.id as any, dto);
+  async create(
+    @Req() req: { user: User },
+    @Body() dto: CreateStoreDto,
+  ): Promise<Store> {
+    return this.storesService.create(req.user, dto);
   }
 
   @Get()
@@ -48,9 +50,10 @@ export class StoresController {
   @Roles(UserRole.MERCHANT, UserRole.ADMIN)
   async update(
     @Param('id', ParseIntPipe) id: number,
+    @Req() req: { user: User },
     @Body() dto: UpdateStoreDto,
   ): Promise<Store> {
-    return this.storesService.update(id, dto);
+    return this.storesService.update(id, req.user, dto);
   }
 
   @Patch(':id/verify')
@@ -58,17 +61,19 @@ export class StoresController {
   @Roles(UserRole.ADMIN, UserRole.ADMIN_STAFF)
   async verifyStore(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
+    @Req() req: { user: User },
     @Body() dto: VerifyStoreDto,
   ): Promise<Store> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     return this.storesService.verifyStore(id, req.user.id, dto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MERCHANT, UserRole.ADMIN)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.storesService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { user: User },
+  ) {
+    return this.storesService.remove(id, req.user);
   }
 }

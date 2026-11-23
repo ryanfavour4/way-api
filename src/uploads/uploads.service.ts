@@ -2,25 +2,37 @@ import {
   Injectable,
   InternalServerErrorException,
   BadRequestException,
+  ForbiddenException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Upload } from './entities/upload.entity';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { LocalStorageEngine } from './local-storage.engine';
 import { SERVER_BASEURL } from 'src/env';
+import { User, UserRole } from 'src/users/entities/users.entity';
+import { Store } from 'src/stores/entities/store.entity';
 
 @Injectable()
 export class UploadsService {
   constructor(
     @InjectRepository(Upload)
     private readonly uploadRepo: Repository<Upload>,
+    @InjectRepository(Store)
+    private readonly storeRepo: Repository<Store>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
   private readonly logger = new Logger(UploadsService.name);
 
-  async uploadFile(file: Express.Multer.File, type: string): Promise<Upload> {
+  async uploadFile(
+    file: Express.Multer.File,
+    type: string,
+    currentUser?: User | null,
+  ): Promise<Upload> {
     const assetId = uuidv4();
 
     // Extract file extension (.jpg, .mp4, etc) safely
@@ -42,6 +54,7 @@ export class UploadsService {
         asset_id: assetId,
         type: type,
         resource_type: file.mimetype.split('/')[0], // dynamically tags 'image' or 'video'
+        uploaded_by_user_id: currentUser?.id,
       });
 
       return await this.uploadRepo.save(newUpload);
@@ -58,6 +71,7 @@ export class UploadsService {
     imageUrl: string,
     type: string,
     identifier: string = 'url-upload',
+    currentUser?: User | null,
   ): Promise<Upload | null> {
     try {
       // 1. Download the file
@@ -90,7 +104,7 @@ export class UploadsService {
       };
 
       // 4. Funnel it right back into your existing local storage flow!
-      return await this.uploadFile(file, type);
+      return await this.uploadFile(file, type, currentUser);
     } catch (error) {
       this.logger.error(`Failed to upload file from URL (${imageUrl}):`, error);
       // We return null so a failed avatar download doesn't break a critical flow (like Login)
@@ -112,17 +126,81 @@ export class UploadsService {
     return upload;
   }
 
-  // 5. Delete an upload from DB and Local Disk
-  async remove(id: number): Promise<void> {
+  // 5. Delete an upload from DB and Local Disk with ownership and shared-reference protection
+  async remove(id: number, currentUser: User): Promise<void> {
     const upload = await this.findOne(id);
 
-    try {
-      // 1. Delete from your local file system using the saved path
-      await LocalStorageEngine.deleteFile(upload.public_id);
+    // 1. Authorization check: if not ADMIN, caller must be uploader or own a resource referencing this upload
+    if (currentUser.role !== UserRole.ADMIN) {
+      const isUploader =
+        upload.uploaded_by_user_id !== undefined &&
+        upload.uploaded_by_user_id !== null &&
+        upload.uploaded_by_user_id === currentUser.id;
 
-      // 2. Now delete metadata row from database
+      const isUserAvatar = currentUser.avatar_id === upload.id;
+
+      const isStoreAsset = await this.storeRepo.findOne({
+        where: [
+          { merchant_id: currentUser.id, logo_id: upload.id },
+          { merchant_id: currentUser.id, storefront_image_id: upload.id },
+        ],
+      });
+
+      if (!isUploader && !isUserAvatar && !isStoreAsset) {
+        throw new ForbiddenException(
+          'You do not have permission to delete this upload',
+        );
+      }
+    }
+
+    // 2. Shared Upload Protection:
+    // Check if other users are referencing this upload as an avatar
+    const otherUsersCount = await this.userRepo.count({
+      where: {
+        avatar_id: upload.id,
+        id: Not(currentUser.id),
+      },
+    });
+
+    // Check if other stores (not owned by currentUser) are referencing this upload
+    const otherStoresCount = await this.storeRepo.count({
+      where: [
+        { logo_id: upload.id, merchant_id: Not(currentUser.id) },
+        { storefront_image_id: upload.id, merchant_id: Not(currentUser.id) },
+      ],
+    });
+
+    if (otherUsersCount > 0 || otherStoresCount > 0) {
+      throw new ConflictException(
+        `Cannot delete upload: this asset is currently in use by ${otherUsersCount} other user(s) and ${otherStoresCount} other store(s). Reassign or remove references before deleting.`,
+      );
+    }
+
+    // 3. Clean up current user's own reference to avoid dangling pointers
+    if (currentUser.avatar_id === upload.id) {
+      await this.userRepo.update(currentUser.id, { avatar_id: undefined });
+    }
+
+    await this.storeRepo.update(
+      { merchant_id: currentUser.id, logo_id: upload.id },
+      { logo_id: undefined },
+    );
+    await this.storeRepo.update(
+      { merchant_id: currentUser.id, storefront_image_id: upload.id },
+      { storefront_image_id: undefined },
+    );
+
+    // 4. Physical file and database record deletion
+    try {
+      await LocalStorageEngine.deleteFile(upload.public_id);
       await this.uploadRepo.remove(upload);
     } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
       console.error('Delete Error:', error);
       throw new InternalServerErrorException(
         `Failed to delete asset: ${(error as Error).message}`,

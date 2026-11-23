@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -11,18 +16,128 @@ import { Store } from './entities/store.entity';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { VerifyStoreDto } from './dto/verify-store.dto';
+import { User, UserRole } from 'src/users/entities/users.entity';
+import { Upload } from 'src/uploads/entities/upload.entity';
 
 @Injectable()
 export class StoresService {
   constructor(
     @InjectRepository(Store)
     private readonly storeRepository: Repository<Store>,
+    @InjectRepository(Upload)
+    private readonly uploadRepository: Repository<Upload>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
+
+  /**
+   * Validate store image asset ownership and permissions
+   */
+  private async validateStoreImageAsset(
+    uploadId: number,
+    currentUser: User,
+    assetLabel: 'logo' | 'storefront image',
+    existingAssetId?: number,
+  ): Promise<void> {
+    const upload = await this.uploadRepository.findOne({
+      where: { id: uploadId },
+    });
+    if (!upload) {
+      throw new BadRequestException(
+        `Store ${assetLabel} upload with ID ${uploadId} not found`,
+      );
+    }
+
+    if (upload.resource_type !== 'image') {
+      throw new BadRequestException(`Store ${assetLabel} must be an image`);
+    }
+
+    if (currentUser.role === UserRole.ADMIN) {
+      return; // Admins have full access
+    }
+
+    // 1. Cross-user avatar check: cannot hijack another user's avatar
+    const otherUser = await this.userRepository.findOne({
+      where: { avatar_id: uploadId },
+    });
+    if (otherUser && otherUser.id !== currentUser.id) {
+      throw new ForbiddenException(
+        `You do not have permission to use another user's private avatar as a store ${assetLabel}`,
+      );
+    }
+
+    // 2. Cross-merchant store check: cannot hijack another merchant's store asset
+    const otherStore = await this.storeRepository.findOne({
+      where: [
+        { logo_id: uploadId },
+        { storefront_image_id: uploadId },
+      ],
+    });
+    if (otherStore && otherStore.merchant_id !== currentUser.id) {
+      throw new ForbiddenException(
+        `You do not have permission to use another merchant's store asset as a store ${assetLabel}`,
+      );
+    }
+
+    // 3. Upload ownership & unassigned asset protection:
+    if (
+      upload.uploaded_by_user_id !== undefined &&
+      upload.uploaded_by_user_id !== null
+    ) {
+      if (upload.uploaded_by_user_id !== currentUser.id) {
+        throw new ForbiddenException(
+          `You do not have permission to use an upload created by another user as a store ${assetLabel}`,
+        );
+      }
+    } else {
+      // upload.uploaded_by_user_id is null (legacy unassigned or uncertain record)
+      const isAlreadyAssignedToThisStore = existingAssetId === uploadId;
+      if (!isAlreadyAssignedToThisStore) {
+        throw new ForbiddenException(
+          `Unassigned uploads with unverified ownership can only be assigned by an administrator`,
+        );
+      }
+    }
+  }
 
   /**
    * Create a new Store linked to the authenticated merchant
    */
-  async create(merchantId: number, dto: CreateStoreDto): Promise<Store> {
+  async create(
+    userOrId: User | number,
+    dto: CreateStoreDto,
+  ): Promise<Store> {
+    let merchantId: number;
+    let currentUser: User | null = null;
+
+    if (typeof userOrId === 'number') {
+      merchantId = userOrId;
+      currentUser = await this.userRepository.findOne({
+        where: { id: merchantId },
+      });
+    } else {
+      merchantId = userOrId.id;
+      currentUser = userOrId;
+    }
+
+    // Validate logo_id if provided
+    if (dto.logo_id !== undefined && dto.logo_id !== null && currentUser) {
+      await this.validateStoreImageAsset(dto.logo_id, currentUser, 'logo');
+    }
+
+    // Validate storefront_image_id if provided
+    if (
+      dto.storefront_image_id !== undefined &&
+      dto.storefront_image_id !== null &&
+      currentUser
+    ) {
+      await this.validateStoreImageAsset(
+        dto.storefront_image_id,
+        currentUser,
+        'storefront image',
+      );
+    }
+
     const baseSlug = dto.name
       .toLowerCase()
       .trim()
@@ -109,12 +224,71 @@ export class StoresService {
   /**
    * Update general store details
    */
-  async update(id: number, dto: UpdateStoreDto): Promise<Store> {
+  async update(
+    id: number,
+    currentUser: User,
+    dto: UpdateStoreDto,
+  ): Promise<Store> {
     const store = await this.findOne(id);
 
+    // Ownership check: only the owning merchant or an ADMIN can update the store
+    if (
+      currentUser.role !== UserRole.ADMIN &&
+      store.merchant_id !== currentUser.id
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this store',
+      );
+    }
+
+    // Protect administrative and metric fields from being modified by ordinary merchants
+    const safeDto = { ...dto };
+    if (currentUser.role !== UserRole.ADMIN) {
+      delete (safeDto as any).merchant_id;
+      delete (safeDto as any).verification_status;
+      delete (safeDto as any).verification_notes;
+      delete (safeDto as any).verified_at;
+      delete (safeDto as any).verified_by_user_id;
+      delete (safeDto as any).has_verified_badge;
+      delete (safeDto as any).verified_badge_expires_at;
+      delete (safeDto as any).rating_avg;
+      delete (safeDto as any).review_count;
+      delete (safeDto as any).footfall_count;
+    }
+
+    // Validate logo_id
+    if (safeDto.logo_id !== undefined) {
+      if (safeDto.logo_id === null) {
+        store.logo_id = undefined;
+        delete (safeDto as any).logo_id;
+      } else if (safeDto.logo_id !== store.logo_id) {
+        await this.validateStoreImageAsset(
+          safeDto.logo_id,
+          currentUser,
+          'logo',
+          store.logo_id,
+        );
+      }
+    }
+
+    // Validate storefront_image_id
+    if (safeDto.storefront_image_id !== undefined) {
+      if (safeDto.storefront_image_id === null) {
+        store.storefront_image_id = undefined;
+        delete (safeDto as any).storefront_image_id;
+      } else if (safeDto.storefront_image_id !== store.storefront_image_id) {
+        await this.validateStoreImageAsset(
+          safeDto.storefront_image_id,
+          currentUser,
+          'storefront image',
+          store.storefront_image_id,
+        );
+      }
+    }
+
     // If name changed, update base slug
-    if (dto.name && dto.name !== store.name) {
-      const baseSlug = dto.name
+    if (safeDto.name && safeDto.name !== store.name) {
+      const baseSlug = safeDto.name
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9 -]/g, '')
@@ -123,7 +297,7 @@ export class StoresService {
       store.slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
     }
 
-    Object.assign(store, dto);
+    Object.assign(store, safeDto);
     return await this.storeRepository.save(store);
   }
 
@@ -150,8 +324,22 @@ export class StoresService {
   /**
    * Soft Delete Store
    */
-  async remove(id: number): Promise<{ message: string }> {
+  async remove(
+    id: number,
+    currentUser: User,
+  ): Promise<{ message: string }> {
     const store = await this.findOne(id);
+
+    // Ownership check: only the owning merchant or an ADMIN can delete the store
+    if (
+      currentUser.role !== UserRole.ADMIN &&
+      store.merchant_id !== currentUser.id
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this store',
+      );
+    }
+
     await this.storeRepository.softDelete(store.id);
 
     return { message: `Store ${id} has been soft deleted successfully` };

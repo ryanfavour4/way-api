@@ -11,6 +11,8 @@ import * as streamifier from 'streamifier';
 import { v4 as uuidv4 } from 'uuid'; // pnpm add uuid
 import 'src/types/express';
 
+import { User } from 'src/users/entities/users.entity';
+
 @Injectable()
 export class UploadsService {
   constructor(
@@ -18,7 +20,11 @@ export class UploadsService {
     private readonly uploadRepo: Repository<Upload>,
   ) {}
 
-  async uploadFile(file: Express.Multer.File, type: string): Promise<Upload> {
+  async uploadFile(
+    file: Express.Multer.File,
+    type: string,
+    currentUser?: User | null,
+  ): Promise<Upload> {
     const assetId = uuidv4();
     // choose public id for clarity
     const publicId = `${type}-${assetId}`;
@@ -50,6 +56,7 @@ export class UploadsService {
         asset_id: assetId,
         type: type,
         resource_type: result.resource_type,
+        uploaded_by_user_id: currentUser?.id,
       });
 
       return await this.uploadRepo.save(newUpload);

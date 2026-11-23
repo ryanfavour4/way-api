@@ -10,11 +10,13 @@ import {
   ParseIntPipe,
   Delete,
   UploadedFiles,
+  Req,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadsService } from './uploads.service';
 import { JwtAuthGuard } from 'src/auth/guard/auth.guard';
 import { allowedPaths } from './local-storage.engine';
+import { User } from 'src/users/entities/users.entity';
 
 @Controller('uploads')
 export class UploadsController {
@@ -27,6 +29,7 @@ export class UploadsController {
   async uploadFiles(
     @UploadedFiles() files: Express.Multer.File[], // <-- Expect an array now
     @Body('type') type: string,
+    @Req() req: { user: User },
   ) {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files uploaded');
@@ -42,7 +45,7 @@ export class UploadsController {
 
     // Map over the array to save every file through your engine loop
     const uploadPromises = files.map((file) =>
-      this.uploadsService.uploadFile(file, uploadType),
+      this.uploadsService.uploadFile(file, uploadType, req.user),
     );
 
     return Promise.all(uploadPromises);
@@ -62,7 +65,11 @@ export class UploadsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.uploadsService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { user: User },
+  ) {
+    return this.uploadsService.remove(id, req.user);
   }
 }

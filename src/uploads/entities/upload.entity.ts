@@ -4,7 +4,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { User } from 'src/users/entities/users.entity';
 
 @Entity('uploads')
 export class Upload {
@@ -29,6 +32,13 @@ export class Upload {
     default: 'image',
   })
   resource_type!: string;
+
+  @Column({ type: 'int', unsigned: true, nullable: true })
+  uploaded_by_user_id?: number;
+
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'uploaded_by_user_id' })
+  uploaded_by_user?: User;
 
   @CreateDateColumn()
   created_at!: Date;

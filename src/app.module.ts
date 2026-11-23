@@ -11,6 +11,8 @@ import { StoresModule } from './stores/stores.module';
 import { StoreOperatingHoursModule } from './store_operating_hours/store_operating_hours.module';
 import { CategoriesModule } from './categories/categories.module';
 import { StoreSubscriptionModule } from './store_subscription/store_subscription.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { NewsletterModule } from './newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { StoreSubscriptionModule } from './store_subscription/store_subscription
     StoreOperatingHoursModule,
     CategoriesModule,
     StoreSubscriptionModule,
+    UploadsModule,
+    NewsletterModule,
   ],
   controllers: [AppController],
   providers: [AppService],
