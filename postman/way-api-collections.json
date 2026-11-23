@@ -345,6 +345,59 @@
       ]
     },
     {
+      "name": "Newsletter 📰",
+      "item": [
+        {
+          "name": "Get all subscribers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/stores",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stores"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create subscriber",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"sales@matrixtech.ng\",\r\n  \"consent\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVER_BASEURL}}/api/v1/newsletter/subscribe",
+              "host": [
+                "{{SERVER_BASEURL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "newsletter",
+                "subscribe"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Uploads 📤",
       "item": [
         {
